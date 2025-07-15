@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
+/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:29:15 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/10 16:59:46 by ylenoel          ###   ########.fr       */
+/*   Updated: 2025/07/15 17:17:33 by yoann            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,5 +55,7 @@ class Client
 	void appendToBuffer(const std::string& data);
 	std::string& getBuffer();
 };
+
+std::ostream& operator<<(std::ostream& out, const Client& Client);
 
 #endif

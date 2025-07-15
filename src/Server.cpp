@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
+/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:45:29 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/11 16:31:44 by ylenoel          ###   ########.fr       */
+/*   Updated: 2025/07/15 18:09:22 by yoann            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Server.hpp"
+#include "../include/Client.hpp"
+#include "../include/colors.hpp"
 
 
 Server::Server(int port) : _port(port), _db_clients()
@@ -18,7 +20,8 @@ Server::Server(int port) : _port(port), _db_clients()
 	setupSocket(); // Création du socket serveur + binding
 	listen(); // Mise en écoute du socket serveur.
 	_cmd_map["NICK"] = &Server::handleNICK;
-	// _cmd_map["PASS"] = &Server::handlePASS;
+	_cmd_map["USER"] = &Server::handleUSER;
+	_cmd_map["REALNAME"] = &Server::handleREALNAME;
 }
 
 Server::~Server()
@@ -96,6 +99,8 @@ void Server::acceptNewClient()
 		.revents = 0,
 	});
 
+	
+
 }
 
 void Server::run()
@@ -110,7 +115,6 @@ void Server::run()
 			std::cerr << "Poll failed!" << std::endl;
 			continue;
 		}
-
 		for(size_t i = 0; i < _pollfds.size(); ++i)
 		{
 			// Ici, on utilise & et pas && : & est un opérateur de comparaison binaire
@@ -157,6 +161,8 @@ void Server::run()
 				handleMessage(maybe_client->second, buffer);
 			}
 			_pollfds[i].revents = 0;
+			printConnectedClients(*this);
+			cout << *this << endl;
 		}
 	}
 }
@@ -189,14 +195,55 @@ void Server::handleMessage(Client& client, const std::string& msg)
 	stringstream ss(msg);
 	
 	string cmdName;
+	string arg;
 	ss >> cmdName;
+	ss >> arg;
 
 	const CmdMap::iterator result = _cmd_map.find(cmdName);
 	if (result == _cmd_map.end()) {
-		cout << "UNKNOWN COMMAND FDP" << endl;
+		cout << "UNKNOWN COMMAND" << endl;
 		return ;
 	}
 
-	(this->*(result->second))(client);
+	(this->*(result->second))(client, arg);
 	// (this->*fn)(client);
+}
+
+int Server::getPort() const {return _port; }
+
+size_t Server::getClientCount() const {return _db_clients.size();}
+
+const vector<pollfd>& Server::getPollFds() const {return _pollfds;}
+
+const map<int, Client>& Server::getClients() const {return _db_clients;}
+
+void Server::printConnectedClients(const Server& server)
+{
+	const map<int, Client>& clients = server.getClients();
+
+	cout << C_QUARTZ"=== Connected Clients (" << clients.size() << ") ===" C_RESET << endl;
+
+	for(map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		cout << C_QUARTZ"FD: " << it->first << "\n";
+		cout << C_QUARTZ << it->second << C_RESET << endl;
+	}
+}
+
+std::ostream& operator<<(std::ostream& out, const Server& Server)
+{
+	const vector<pollfd>& pollfds = Server.getPollFds();
+	
+	out << C_PASTEL_BLUE"=== Server Debug Info ===\n";
+	out << "Total fds monitored: " << pollfds.size() << "\n" C_RESET;
+	
+	for(size_t i = 0; i < pollfds.size(); ++i)
+	{
+		const pollfd& pfd = pollfds[i];
+		out << C_PASTEL_BLUE" [" << i << "] fd: " << pfd.fd
+			<< " | events: " << pfd.events
+			<< " | revents: " << pfd.revents << "\n" C_RESET;
+	}
+
+	return out;
 }

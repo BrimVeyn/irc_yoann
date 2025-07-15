@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
+/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:28:05 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/11 16:47:44 by ylenoel          ###   ########.fr       */
+/*   Updated: 2025/07/15 18:09:00 by yoann            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ using namespace std; // Plus besoin de faire std::map, on peut écrire map direc
 class Server
 {
 	// Alors, ce qui suit est un alias pour un pointeur sur fonction qui prend en paramètre une référence à un objet client.
-	typedef void (Server::*CmdFn)(Client &); 
+	typedef void (Server::*CmdFn)(Client &client, std::string& arg); 
 
 	// Aliases 
 	#define ClientMap std::map<int, Client> 
@@ -59,7 +59,9 @@ class Server
 		int _port;			// Port du serveur (ex: 6667)
 		bool _running;		// État du serveur (On/off)
 
-		void handleNICK(Client &);
+		void handleNICK(Client &client, std::string& arg);
+		void handleUSER(Client &client, std::string& arg);
+		void handleREALNAME(Client &client, std::string& arg);
 	
 		std::vector<struct pollfd> _pollfds;
 		ClientMap _db_clients; // Liste des clients connectés.
@@ -80,6 +82,13 @@ class Server
 		Server(int port);
 		~Server();
 		void run();
+		int getPort() const;
+		size_t getClientCount() const;
+		const std::vector<pollfd>& getPollFds() const;
+		const std::map<int, Client>& getClients() const;
+		void printConnectedClients(const Server& server);
 };
+
+std::ostream& operator<<(std::ostream& out, const Server& Server);
 
 #endif
