@@ -182,20 +182,22 @@ void Server::run()
 	close_fds();
 }
 
-
-bool Server::sendToClient(const Client& client, const std::string& msg)
-{
+//This function returns a boolean but this value is never checked ? is it usefull ?
+//Would it be better to throw an error ? Do we care about the send function failing ?
+bool Server::sendToClient(const Client &client, const std::string &msg) {
 	size_t totalSent = 0;
 	size_t toSend = msg.length();
 
 	while (totalSent < toSend) {
-	ssize_t sent = send(client.getFd(), msg.c_str() + totalSent, toSend - totalSent, 0);
+		ssize_t sent = send(client.getFd(), msg.c_str() + totalSent,
+							toSend - totalSent, 0);
 		if (sent < 0) {
-			std::cerr << "[Error] Failed to send to client "
-					  << client.getFd() << ": " << strerror(errno) << std::endl;
+				std::cerr << "[Error] Failed to send to client "
+						  << client.getFd() << ": " << strerror(errno)
+						  << std::endl;
 
-			// Gestion d'erreurs à implémenter ici
-			return false;
+				// Gestion d'erreurs à implémenter ici
+				return false;
 		}
 		totalSent += sent;
 	}

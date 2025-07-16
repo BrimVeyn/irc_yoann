@@ -55,6 +55,12 @@ class Server
 		//Convention : RHS = Right hand side / LHS = Left hand side
 		bool operator()(const pollfd &rhs) { return fd == rhs.fd; }
 	};
+	
+	struct MatchNickname {
+		string nickname;
+		MatchNickname(const string& nickname) : nickname(nickname) {};
+		bool operator()(const ClientMap::value_type& client) { return client.second.getNickname() == nickname; }
+	};
 
 	private:
 
@@ -63,6 +69,10 @@ class Server
 		int _port;			// Port du serveur (ex: 6667)
 		bool _running;		// État du serveur (On/off)
 		string _password;	// Password pour se connecter au réseau
+
+		string buildCommandString(const string& message);
+		string buildErrorString(const int& code, const string& message);
+		bool sendWelcome(const Client &client);
 
 		void handleNICK(Client &client, std::string& arg);
 		void handleUSER(Client &client, std::string& arg);
