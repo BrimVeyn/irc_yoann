@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
+/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:33:22 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/15 18:27:42 by yoann            ###   ########.fr       */
+/*   Updated: 2025/07/16 14:43:53 by ylenoel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 #include "../include/Server.hpp"
 #include "../include/colors.hpp"
 
-Client::Client() : _fd(-1), _registered(false), _hasNick(false), _hasUser(false) {}
+Client::Client() : _fd(), _registered(false), _hasPassword(false) {}
 
-Client::Client(int fd) : _fd(fd), _registered(false), _hasNick(false), _hasUser(false) {}
+Client::Client(int fd) : _fd(fd), _registered(false), _hasPassword(false) {}
 
 Client::~Client() {}
 
@@ -33,9 +33,10 @@ const std::string& Client::getRealname() const {return _realname;}
 void Client::setRealname(const std::string& realname) {_realname = realname;}
 
 bool Client::isRegistered() const {return _registered;}
-void Client::setHasNick(bool val) {_hasNick = val;}
-void Client::setHasUser(bool val) {_hasUser = val;}
 void Client::setRegistration(const bool value) {_registered = value;}
+
+bool Client::getHasPassword() const {return _hasPassword;}
+void Client::setHasPassword(bool val) {_hasPassword = val;}
 
 void Client::appendToBuffer(const std::string& data) {_buffer += data;}
 std::string& Client::getBuffer() {return _buffer;}

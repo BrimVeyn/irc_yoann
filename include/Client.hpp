@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
+/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/10 15:29:15 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/15 17:17:33 by yoann            ###   ########.fr       */
+/*   Updated: 2025/07/16 14:32:52 by ylenoel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,7 @@ class Client
 		std::string _realname;
 		std::string _buffer; // Pour accumuler les messages partiels
 		bool _registered;
-		bool _hasNick;
-		bool _hasUser;
+		bool _hasPassword;
 	
 	public:
 		
@@ -47,8 +46,8 @@ class Client
 	void setRealname(const std::string& realname);
 
 	bool isRegistered() const;
-	void setHasNick(bool val);
-	void setHasUser(bool val);
+	bool getHasPassword() const;
+	void setHasPassword(bool val);
 	
 	void setRegistration(const bool value);
 

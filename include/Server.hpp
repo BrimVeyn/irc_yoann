@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
+/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:28:05 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/15 18:09:00 by yoann            ###   ########.fr       */
+/*   Updated: 2025/07/16 17:01:40 by ylenoel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,10 @@
 #include <Client.hpp>
 #include <sstream>
 #include <map>
+#include <cerrno>
+#include <csignal>
 
+extern volatile sig_atomic_t g_running;
 using namespace std; // Plus besoin de faire std::map, on peut écrire map direct.
 
 class Server
@@ -54,14 +57,16 @@ class Server
 	};
 
 	private:
-	
+
+		string _serverHostName; // Nom du serveur
 		int _server_fd;		// socket d'écoute.
 		int _port;			// Port du serveur (ex: 6667)
 		bool _running;		// État du serveur (On/off)
+		string _password;	// Password pour se connecter au réseau
 
 		void handleNICK(Client &client, std::string& arg);
 		void handleUSER(Client &client, std::string& arg);
-		void handleREALNAME(Client &client, std::string& arg);
+		void handlePASS(Client &client, std::string& arg);
 	
 		std::vector<struct pollfd> _pollfds;
 		ClientMap _db_clients; // Liste des clients connectés.
@@ -76,14 +81,18 @@ class Server
 		void removeClient(int fd);
 		void handleMessage(Client& client, const std::string& msg);
 		ClientMap::iterator getClientByFd(const int fd);
-	
+		bool sendToClient(const Client& client, const std::string& msg);
+		bool isNicknameTaken(const std::string& nickname) const;
+		
 	public:
 
-		Server(int port);
+		Server(int port, string password);
 		~Server();
 		void run();
 		int getPort() const;
+		string getServerHostName() const;
 		size_t getClientCount() const;
+		string getPassword() const;
 		const std::vector<pollfd>& getPollFds() const;
 		const std::map<int, Client>& getClients() const;
 		void printConnectedClients(const Server& server);

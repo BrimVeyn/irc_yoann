@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: yoann <yoann@student.42.fr>                +#+  +:+       +#+        */
+/*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:45:29 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/15 18:09:22 by yoann            ###   ########.fr       */
+/*   Updated: 2025/07/16 17:10:02 by ylenoel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,24 @@
 #include "../include/Client.hpp"
 #include "../include/colors.hpp"
 
-
-Server::Server(int port) : _port(port), _db_clients()
+Server::Server(int port, string password) : _serverHostName("Server ft_irc"), _port(port), _password(password), _db_clients()
 {
 	setupSocket(); // Création du socket serveur + binding
 	listen(); // Mise en écoute du socket serveur.
 	_cmd_map["NICK"] = &Server::handleNICK;
 	_cmd_map["USER"] = &Server::handleUSER;
-	_cmd_map["REALNAME"] = &Server::handleREALNAME;
+	_cmd_map["PASS"] = &Server::handlePASS;
+	// _cmd_map["PING"] = &Server::handlePING;
+	// _cmd_map["PONG"] = &Server::handlePONG;
+	// _cmd_map["QUIT"] = &Server::handleQUIT;
+	// _cmd_map["JOIN"] = &Server::handleJOIN;
+	// _cmd_map["PART"] = &Server::handlePART;
+	// _cmd_map["PRIVMSG"] = &Server::handlePRIVMSG;
+	// _cmd_map["NOTICE"] = &Server::handleNOTICE;
+	// _cmd_map["MODE"] = &Server::handleMODE;
+	// _cmd_map["TOPIC"] = &Server::handleTOPIC;
+	// _cmd_map["KICK"] = &Server::handleKICK;
+	
 }
 
 Server::~Server()
@@ -31,7 +41,7 @@ Server::~Server()
 
 void Server::close_fds()
 {
-	std::cout << "Shutting down server >>" << std::endl;
+	// std::cout << "Shutting down server >>" << std::endl;
 	
 	// On ferme les clients
 	for(size_t i = 0; i < _db_clients.size(); ++i)
@@ -92,7 +102,8 @@ void Server::acceptNewClient()
 	 << ", IP: " << inet_ntoa(client_addr.sin_addr)
 	 << ", Port: " << ntohs(client_addr.sin_port) << std::endl;
 	
-	_db_clients.insert(make_pair(client_fd, Client())); // Dans une map il faut insert une pair. On ne peut pas insérer une variable seule.
+	
+	_db_clients.insert(make_pair(client_fd, Client(client_fd))); // Dans une map il faut insert une pair. On ne peut pas insérer une variable seule.
 	_pollfds.push_back((pollfd){
 		.fd = client_fd,
 		.events = POLLIN,
@@ -105,13 +116,15 @@ void Server::acceptNewClient()
 
 void Server::run()
 {
-	while(true)
+	while(g_running)
 	{
 		/* Exécution de poll(), qui va remplir les pollfds.revent concerné par des évènements.*/
 		// Poll() itère tout seul le long du _pollfds.
 		int ret = poll(&_pollfds[0], _pollfds.size(), -1);
 		if(ret < 0)
 		{
+			if (errno == EINTR && !g_running) 
+				break;
 			std::cerr << "Poll failed!" << std::endl;
 			continue;
 		}
@@ -165,9 +178,29 @@ void Server::run()
 			cout << *this << endl;
 		}
 	}
+	cout << "Shutting down server..." << endl;
+	close_fds();
 }
 
 
+bool Server::sendToClient(const Client& client, const std::string& msg)
+{
+	size_t totalSent = 0;
+	size_t toSend = msg.length();
+
+	while (totalSent < toSend) {
+	ssize_t sent = send(client.getFd(), msg.c_str() + totalSent, toSend - totalSent, 0);
+		if (sent < 0) {
+			std::cerr << "[Error] Failed to send to client "
+					  << client.getFd() << ": " << strerror(errno) << std::endl;
+
+			// Gestion d'erreurs à implémenter ici
+			return false;
+		}
+		totalSent += sent;
+	}
+	return true;
+}
 
 ClientMap::iterator Server::getClientByFd(const int fd) {
 	return _db_clients.find(fd);
@@ -190,24 +223,67 @@ handle la cmd présente dans le msg.
 
 */
 
+// void Server::handleMessage(Client& client, const std::string& msg)
+// {
+// 	stringstream ss(msg);
+	
+// 	string cmdName;
+// 	string arg;
+// 	ss >> cmdName;
+// 	ss >> arg;
+
+// 	const CmdMap::iterator result = _cmd_map.find(cmdName);
+// 	if (result == _cmd_map.end()) {
+// 		cout << "UNKNOWN COMMAND" << endl;
+// 		return ;
+// 	}
+
+// 	(this->*(result->second))(client, arg);
+// 	// (this->*fn)(client);
+// }
+
 void Server::handleMessage(Client& client, const std::string& msg)
 {
-	stringstream ss(msg);
-	
-	string cmdName;
-	string arg;
+	std::stringstream ss(msg);
+
+	std::string cmdName;
 	ss >> cmdName;
-	ss >> arg;
+
+	std::string arg;
+	std::getline(ss, arg);
+
+	// Trim spaces au début
+	size_t start = arg.find_first_not_of(' ');
+	if (start != std::string::npos)
+		arg = arg.substr(start);
+	else
+		arg = "";
 
 	const CmdMap::iterator result = _cmd_map.find(cmdName);
 	if (result == _cmd_map.end()) {
-		cout << "UNKNOWN COMMAND" << endl;
-		return ;
+		std::cout << "UNKNOWN COMMAND" << std::endl;
+		return;
 	}
 
 	(this->*(result->second))(client, arg);
-	// (this->*fn)(client);
 }
+
+
+bool Server::isNicknameTaken(const std::string& nickname) const {
+	for (ClientMap::const_iterator it = _db_clients.begin(); it != _db_clients.end(); ++it) {
+		if (it->second.getNickname() == nickname) {
+			return true; // nickname déjà pris
+		}
+	}
+	return false; // nickname libre
+}
+
+
+
+
+/*															========= GETTERS/SETTERS =========					*/
+
+string Server::getPassword() const {return _password; }
 
 int Server::getPort() const {return _port; }
 
@@ -216,6 +292,11 @@ size_t Server::getClientCount() const {return _db_clients.size();}
 const vector<pollfd>& Server::getPollFds() const {return _pollfds;}
 
 const map<int, Client>& Server::getClients() const {return _db_clients;}
+
+string Server::getServerHostName() const {return _serverHostName;}
+
+
+/*																========= DEBUG =========																							*/
 
 void Server::printConnectedClients(const Server& server)
 {
@@ -247,3 +328,4 @@ std::ostream& operator<<(std::ostream& out, const Server& Server)
 
 	return out;
 }
+
