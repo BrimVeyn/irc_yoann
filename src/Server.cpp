@@ -6,7 +6,7 @@
 /*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:45:29 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/16 17:10:02 by ylenoel          ###   ########.fr       */
+/*   Updated: 2025/07/17 12:09:48 by ylenoel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,7 @@ void Server::setupSocket()
 	if(bind(_server_fd, (sockaddr*)&addr, sizeof(addr)) < 0 && close(_server_fd))
 		throw std::runtime_error("Failed to bind server!");
 
+	setNonBlocking(_server_fd);
 	// On ajoute le socket serveur au vecteur _pollfds
 	struct pollfd server_fd = {
 		.fd = _server_fd,
@@ -102,16 +103,13 @@ void Server::acceptNewClient()
 	 << ", IP: " << inet_ntoa(client_addr.sin_addr)
 	 << ", Port: " << ntohs(client_addr.sin_port) << std::endl;
 	
-	
+	setNonBlocking(client_fd);
 	_db_clients.insert(make_pair(client_fd, Client(client_fd))); // Dans une map il faut insert une pair. On ne peut pas insérer une variable seule.
 	_pollfds.push_back((pollfd){
 		.fd = client_fd,
 		.events = POLLIN,
 		.revents = 0,
 	});
-
-	
-
 }
 
 void Server::run()
@@ -203,6 +201,16 @@ bool Server::sendToClient(const Client &client, const std::string &msg) {
 	}
 	return true;
 }
+
+void Server::setNonBlocking(int fd) {
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		throw std::runtime_error("fcntl F_GETFL failed");
+
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		throw std::runtime_error("fcntl F_SETFL O_NONBLOCK failed");
+}
+
 
 ClientMap::iterator Server::getClientByFd(const int fd) {
 	return _db_clients.find(fd);

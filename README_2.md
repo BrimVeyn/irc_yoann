@@ -10,8 +10,7 @@
 
 Notion interessantes abordees : getter de map/vector.
 
-
-16/07 
+16/07
 
 - Handle le password pour lancer l'exécutable et se connecter au serveur.
 - Création de la variable _password dans Server + getter/setter.
@@ -21,6 +20,7 @@ Notion interessantes abordees : getter de map/vector.
 - Mise à jour des fonctions handleNICK/USER
 - Gestion du control+C --> extern volatile sig_atomic_t g_running dans le Server.hpp, puis définition dans le main.cpp, et dans Server::run while(true)    --> while(g_running)
 
-Pour demain :
+17/06 :
 
-- Gérer NICKNAME's already used. Tableau de NICKNAME qui serait mis à jour à chaque connexion/deconnexion?
+- Nickname's already used case
+- Passage en mode non bloquant pour les sockets serveur/clients ---> cf Mode Bloquant/Non-bloquant et Multiplexage de poll() dans README.md

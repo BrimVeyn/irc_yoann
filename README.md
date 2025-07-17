@@ -201,6 +201,13 @@ Faire une gestion minimale du protocole IRC en implémentant
 - PING/PONG
 - QUIT
 
+### V - Mode non bloquant et Multiplexage
+
+Mode non-bloquant : Par défaut, lors de l'appel de socket(), le fd est mis en mode bloquant. Ce qui signifie par exemple que recv() bloquera l'exécution du programme en attendant qu'il y ait une donnée à lire. Par défaut, poll() "prévient" ce problème par l'utilisation de mutliplexage, cependant cela reste une sécurité de passer les sockets/fd en mode non-bloquant. Comme ça, si rien n'arrive sur le fd, recv renvoie -1 et passe à autre chose.
+
+
+Multiplexage : Imaginons qu'on a 1000 clients à surveiller. On ne pourrait pas les tester un par un pour vérifier si un évènement a eu lieu dessus, ni même utiliser un thread par client, ce serait beaucoup trop couteux. Donc poll() utilise une boucle qui va passer à travers chaque client/server, si il détecte un event, le notifie, et passe au prochain. 
+
 ### XXX - ASTUCES
 
 - Si on utilise une boucle en C++, c'est que le code n'est pas optimisé. On peut toujours utiliser des .remove, .find etc...

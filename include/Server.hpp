@@ -6,7 +6,7 @@
 /*   By: ylenoel <ylenoel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 15:28:05 by ylenoel           #+#    #+#             */
-/*   Updated: 2025/07/16 17:01:40 by ylenoel          ###   ########.fr       */
+/*   Updated: 2025/07/17 12:08:27 by ylenoel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 #include <map>
 #include <cerrno>
 #include <csignal>
+#include <fcntl.h>
 
 extern volatile sig_atomic_t g_running;
 using namespace std; // Plus besoin de faire std::map, on peut écrire map direct.
@@ -93,6 +94,7 @@ class Server
 		ClientMap::iterator getClientByFd(const int fd);
 		bool sendToClient(const Client& client, const std::string& msg);
 		bool isNicknameTaken(const std::string& nickname) const;
+		void setNonBlocking(int fd);
 		
 	public:
 
